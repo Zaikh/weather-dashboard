@@ -313,18 +313,12 @@ canvas {
     gap: 14px;
   }
 
+  #chart {
+    height: 120px;
+  }
+
   .card {
     padding: 16px;
-  }
-
-  .circle {
-    width: 100px;
-    height: 100px;
-  }
-
-  .circle svg {
-    width: 100px;
-    height: 100px;
   }
 }
 
@@ -366,8 +360,8 @@ canvas {
     font-size: 16px;
   }
 
-  .card {
-    padding: 5px 5px;
+  #chart {
+    height: 80px;
   }
 
   .card h2 {
@@ -387,11 +381,6 @@ canvas {
 
   .card {
     padding: 14px;
-  }
-
-  .circle {
-    width: 90px;
-    height: 90px;
   }
 
   .center {
@@ -418,3 +407,4 @@ canvas {
     font-size: 34px;
   }
 }
+
