@@ -1,152 +1,194 @@
-   const qs = id => document.getElementById(id);
+/* ==========================
+   DOM CACHE (ONE TIME)
+========================== */
+const $ = id => document.getElementById(id);
 
-    const search   = qs("search");
-    const btn      = qs("searchBtn");
-    const loc      = qs("location");
-    const temp     = qs("temp");
-    const cond     = qs("condition");
-    const uv       = qs("uv");
-    const pressure = qs("pressure");
+const DOM = {
+  search: $("search"),
+  btn: $("searchBtn"),
+  loc: $("location"),
+  temp: $("temp"),
+  cond: $("condition"),
+  uv: $("uv"),
+  pressure: $("pressure"),
+  humVal: $("humVal"),
+  humProg: $("humProg"),
+  windVal: $("windVal"),
+  windProg: $("windProg"),
+  thermo: $("thermoFill"),
+  week: $("week"),
+  icon: $("weatherIcon"),
+  chart: $("chart"),
+  bgVideo: $("bgVideo")
+};
 
-    const humVal   = qs("humVal");
-    const humProg  = qs("humProg");
-    const windVal  = qs("windVal");
-    const windProg = qs("windProg");
+/* ==========================
+   CONSTANTS & CACHE
+========================== */
+const RING_CIRC = 314;
+const cache = new Map();
+let abortController = null;
 
-    const thermo   = qs("thermoFill");
-    const week     = qs("week");
+/* ==========================
+   HELPERS
+========================== */
+const debounce = (fn, delay = 400) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
+  };
+};
 
+const weatherText = c =>
+  c === 0 ? "Clear" :
+  c <= 3 ? "Cloudy" :
+  c <= 48 ? "Fog" :
+  c <= 67 ? "Rain" :
+  c <= 77 ? "Snow" : "Storm";
 
-    function weatherText(code) {
-      if (code == 0)  return "Clear";
-      if (code <= 3)  return "Cloudy";
-      if (code <= 48) return "Fog";
-      if (code <= 67) return "Rain";
-      if (code <= 77) return "Snow";
-      return "Storm";
-    }
+const setIcon = code => {
+  DOM.icon.className =
+    code === 0  ? "wi wi-day-sunny" :
+    code <= 3  ? "wi wi-day-cloudy" :
+    code <= 48 ? "wi wi-fog" :
+    code <= 67 ? "wi wi-rain" :
+    code <= 77 ? "wi wi-snow" :
+                 "wi wi-thunderstorm";
+};
 
-    function icon(code) {
-      const i = qs("weatherIcon");
-      i.className =
-        code == 0  ? "wi wi-day-sunny" :
-        code <= 3  ? "wi wi-day-cloudy" :
-        code <= 48 ? "wi wi-fog" :
-        code <= 67 ? "wi wi-rain" :
-        code <= 77 ? "wi wi-snow" :
-                     "wi wi-thunderstorm";
-    }
+const ring = (el, val, max = 100) => {
+  el.style.strokeDashoffset =
+    RING_CIRC - (Math.min(val, max) / max) * RING_CIRC;
+};
 
-    function ring(el, val, max = 100) {
-      const c = 314;
-      el.style.strokeDashoffset =
-        c - (Math.min(val, max) / max) * c;
-    }
+const setUV = v => {
+  DOM.uv.textContent = v.toFixed(1);
+  DOM.uv.style.color =
+    v < 3 ? "#4ade80" :
+    v < 6 ? "#facc15" :
+    v < 8 ? "#fb923c" : "#ef4444";
+};
 
-    function uvColor(v) {
-      uv.textContent = v.toFixed(1);
-      uv.style.color =
-        v < 3 ? "#4ade80" :
-        v < 6 ? "#facc15" :
-        v < 8 ? "#fb923c" :
-                "#ef4444";
-    }
+const setThermo = t => {
+  DOM.thermo.style.height =
+    Math.min(100, Math.max(0, ((t + 10) / 60) * 100)) + "%";
+};
 
-    function thermoFill(t) {
-      const p = ((t + 10) / 60) * 100;
-      thermo.style.height =
-        Math.min(100, Math.max(0, p)) + "%";
-    }
+/* ==========================
+   API (CACHED + SAFE)
+========================== */
+async function fetchJSON(url) {
+  if (cache.has(url)) return cache.get(url);
 
-    async function coords(city) {
-      const r = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`
-      );
-      const d = await r.json();
-      return d.results[0];
-    }
+  abortController?.abort();
+  abortController = new AbortController();
 
-    async function weather(lat, lon, name) {
-      const r = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,uv_index,surface_pressure,temperature_2m&daily=temperature_2m_max&timezone=auto`
-      );
+  const res = await fetch(url, { signal: abortController.signal });
+  const data = await res.json();
+  cache.set(url, data);
+  return data;
+}
 
-      const d = await r.json();
+async function getCoords(city) {
+  const d = await fetchJSON(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`
+  );
+  return d?.results?.[0];
+}
 
-      loc.textContent  = name;
-      temp.textContent = d.current_weather.temperature + "°C";
-      cond.textContent = weatherText(d.current_weather.weathercode);
+async function loadWeather(lat, lon, label) {
+  const d = await fetchJSON(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m,uv_index,surface_pressure,temperature_2m&daily=temperature_2m_max&timezone=auto`
+  );
 
-      icon(d.current_weather.weathercode);
-      thermoFill(d.current_weather.temperature);
+  /* BATCH DOM UPDATE */
+  requestAnimationFrame(() => {
+    DOM.loc.textContent = label;
+    DOM.temp.textContent = d.current_weather.temperature + "°C";
+    DOM.cond.textContent = weatherText(d.current_weather.weathercode);
 
-      const h = d.current_weather.time.slice(0, 13);
-      const i = d.hourly.time.findIndex(t => t.startsWith(h));
+    setIcon(d.current_weather.weathercode);
+    setThermo(d.current_weather.temperature);
 
-      humVal.textContent = d.hourly.relativehumidity_2m[i];
-      ring(humProg, d.hourly.relativehumidity_2m[i]);
+    const hour = d.current_weather.time.slice(0, 13);
+    const idx = d.hourly.time.findIndex(t => t.startsWith(hour));
 
-      windVal.textContent = d.current_weather.windspeed;
-      ring(windProg, d.current_weather.windspeed, 100);
+    DOM.humVal.textContent = d.hourly.relativehumidity_2m[idx];
+    ring(DOM.humProg, d.hourly.relativehumidity_2m[idx]);
 
-      pressure.textContent =
-        Math.round(d.hourly.surface_pressure[i]) + " mb";
+    DOM.windVal.textContent = d.current_weather.windspeed;
+    ring(DOM.windProg, d.current_weather.windspeed);
 
-      uvColor(d.hourly.uv_index[i]);
+    DOM.pressure.textContent =
+      Math.round(d.hourly.surface_pressure[idx]) + " mb";
 
-      week.innerHTML = "";
-      d.daily.temperature_2m_max.forEach((t, i) => {
-        week.innerHTML += `<li>Day ${i + 1}<span>${t}°</span></li>`;
-      });
+    setUV(d.hourly.uv_index[idx]);
 
-      draw(d.hourly.temperature_2m.slice(0, 12));
-    }
-
-    function draw(arr) {
-      const c = qs("chart");
-      const x = c.getContext("2d");
-
-      c.width = c.offsetWidth;
-      x.clearRect(0, 0, c.width, 120);
-
-      const max = Math.max(...arr);
-      const min = Math.min(...arr);
-
-      x.beginPath();
-      x.strokeStyle = "#fff";
-      x.lineWidth = 2;
-
-      arr.forEach((t, i) => {
-        const px = (i / (arr.length - 1)) * c.width;
-        const py = 120 - ((t - min) / (max - min)) * 120;
-        i ? x.lineTo(px, py) : x.moveTo(px, py);
-      });
-
-      x.stroke();
-    }
-
-    btn.onclick = async () => {
-      if (!search.value) return;
-      const c = await coords(search.value);
-      weather(c.latitude, c.longitude, `${c.name}, ${c.country}`);
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      p => weather(
-        p.coords.latitude,
-        p.coords.longitude,
-        "Your Location"
-      ),
-      () => coords("Delhi").then(c =>
-        weather(c.latitude, c.longitude, "Delhi")
-      )
-    );
-
-    const bgVideo = qs("bgVideo");
-    bgVideo.playbackRate = 0.6;
-
-    search.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        btn.click();
-      }
+    /* WEEK LIST (NO innerHTML +=) */
+    const frag = document.createDocumentFragment();
+    d.daily.temperature_2m_max.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `Day ${i + 1}<span>${t}°</span>`;
+      frag.appendChild(li);
     });
+    DOM.week.replaceChildren(frag);
+
+    drawChart(d.hourly.temperature_2m.slice(0, 12));
+  });
+}
+
+/* ==========================
+   CANVAS (THROTTLED)
+========================== */
+let chartRAF;
+function drawChart(arr) {
+  cancelAnimationFrame(chartRAF);
+  chartRAF = requestAnimationFrame(() => {
+    const ctx = DOM.chart.getContext("2d");
+    const w = DOM.chart.offsetWidth;
+    DOM.chart.width = w;
+
+    ctx.clearRect(0, 0, w, 120);
+
+    const max = Math.max(...arr);
+    const min = Math.min(...arr);
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    arr.forEach((t, i) => {
+      const x = (i / (arr.length - 1)) * w;
+      const y = 120 - ((t - min) / (max - min)) * 120;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.stroke();
+  });
+}
+
+/* ==========================
+   EVENTS
+========================== */
+const searchWeather = debounce(async () => {
+  if (!DOM.search.value) return;
+  const c = await getCoords(DOM.search.value);
+  if (c) loadWeather(c.latitude, c.longitude, `${c.name}, ${c.country}`);
+});
+
+DOM.btn.addEventListener("click", searchWeather);
+DOM.search.addEventListener("keydown", e => e.key === "Enter" && searchWeather());
+
+/* ==========================
+   INIT
+========================== */
+navigator.geolocation.getCurrentPosition(
+  p => loadWeather(p.coords.latitude, p.coords.longitude, "Your Location"),
+  () => getCoords("Delhi").then(c =>
+    loadWeather(c.latitude, c.longitude, "Delhi")
+  )
+);
+
+/* Video perf */
+DOM.bgVideo.playbackRate = 0.6;
+DOM.bgVideo.preload = "auto";
