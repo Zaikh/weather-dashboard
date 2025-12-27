@@ -240,12 +240,38 @@ canvas {
 
 
 /* ==============================
-   Responsive
+   RESPONSIVE (IMPROVED & CLEAN)
 ============================== */
 
+/* -------- Large Tablets / Small Laptops -------- */
+@media (max-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+  }
+
+  .main h1 {
+    font-size: 28px;
+  }
+
+  .main h2 {
+    font-size: 56px;
+  }
+}
+
+/* -------- Tablets (900px & below) -------- */
 @media (max-width: 900px) {
   .dashboard {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    order: -1;
+    text-align: center;
+  }
+
+  .sidebar ul li {
+    font-size: 14px;
   }
 
   .stats {
@@ -253,8 +279,142 @@ canvas {
   }
 }
 
+/* -------- Medium Devices -------- */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .app {
+    padding: 14px;
+  }
+
+  .topbar {
+    padding: 10px;
+  }
+
+  .main {
+    padding: 24px 18px;
+  }
+
+  .main h1 {
+    font-size: 24px;
+  }
+
+  .main h2 {
+    font-size: 52px;
+  }
+}
+
+/* -------- Small Tablets / Large Phones -------- */
+@media (max-width: 700px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .circle svg {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* -------- Mobile Devices -------- */
+@media (max-width: 600px) {
+  .main {
+    padding: 18px 14px;
+  }
+
+  .main h1 {
+    font-size: 22px;
+  }
+
+  .main h2 {
+    font-size: 46px;
+  }
+
+  #weatherIcon {
+    font-size: 46px !important;
+    margin: 8px 0;
+  }
+
+  .thermo {
+    height: 80px;
+  }
+}
+
+/* -------- Small Phones -------- */
 @media (max-width: 500px) {
   .stats {
     grid-template-columns: 1fr;
+  }
+
+  .topbar input {
+    font-size: 14px;
+  }
+
+  .topbar button {
+    font-size: 16px;
+  }
+
+  .card {
+    padding: 5px 5px;
+  }
+
+  .card h2 {
+    font-size: 22px;
+  }
+}
+
+/* -------- Very Small Devices -------- */
+@media (max-width: 360px) {
+  .main h1 {
+    font-size: 20px;
+  }
+
+  .main h2 {
+    font-size: 40px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .circle {
+    width: 90px;
+    height: 90px;
+  }
+
+  .center {
+    font-size: 18px;
+  }
+}
+
+/* -------- Ultra Small / Old Devices -------- */
+@media (max-width: 300px) {
+  body {
+    font-size: 12px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .topbar button {
+    align-self: center;
+  }
+
+  .main h2 {
+    font-size: 34px;
   }
 }
