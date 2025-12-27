@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Dashboard</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css"/>
+
+<!-- Stylesheet -->
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Background Video -->
+  <video
+    autoplay
+    muted
+    loop
+    playsinline
+    class="bg-video"
+    id="bgVideo"
+  >
+    <source src="assets/vedio.mp4" type="video/mp4">
+  </video>
+
+  <div class="app">
+
+    <!-- Top Search Bar -->
+    <header class="topbar glass">
+      <input id="search" placeholder="Search city">
+      <button id="searchBtn">🔍</button>
+    </header>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+
+      <!-- Sidebar -->
+      <aside class="sidebar glass">
+        <h3>7 Days</h3>
+        <ul id="week"></ul>
+      </aside>
+
+      <!-- Main Weather -->
+      <main class="main glass">
+        <h1 id="location">Loading...</h1>
+
+        <i
+          id="weatherIcon"
+          class="wi wi-day-sunny"
+          style="font-size:60px"
+        ></i>
+
+        <h2 id="temp">--°C</h2>
+
+        <div class="thermo">
+          <div class="thermo-fill" id="thermoFill"></div>
+        </div>
+
+        <p id="condition">---</p>
+
+        <canvas id="chart" height="120"></canvas>
+      </main>
+
+      <!-- Stats -->
+      <section class="stats">
+
+        <!-- UV -->
+        <div class="card glass">
+          <p>UV Index</p>
+          <h2 id="uv">--</h2>
+        </div>
+
+        <!-- Humidity -->
+        <div class="card glass humidity">
+          <p>Humidity</p>
+
+          <div class="circle">
+            <svg width="120" height="120">
+              <circle class="bg" cx="60" cy="60" r="50"/>
+              <circle
+                class="progress"
+                id="humProg"
+                cx="60"
+                cy="60"
+                r="50"
+              />
+            </svg>
+
+            <div class="center">
+              <span id="humVal">--</span>%
+            </div>
+          </div>
+        </div>
+
+        <!-- Wind -->
+        <div class="card glass wind">
+          <p>Wind</p>
+
+          <div class="circle">
+            <svg width="120" height="120">
+              <circle class="bg" cx="60" cy="60" r="50"/>
+              <circle
+                class="progress"
+                id="windProg"
+                cx="60"
+                cy="60"
+                r="50"
+              />
+            </svg>
+
+            <div class="center">
+              <span id="windVal">0</span>km/h
+            </div>
+          </div>
+        </div>
+
+        <!-- Pressure -->
+        <div class="card glass">
+          <p>Pressure</p>
+          <h2 id="pressure">-- mb</h2>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+
+  <!-- ======================
+       JavaScript
+  ====================== -->
+
+  <script src="script.js"></script>
+
+</body>
+</html>
+
